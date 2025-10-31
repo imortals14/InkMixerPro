@@ -44,12 +44,20 @@ jobs:
         pip install --upgrade pip
         pip install buildozer
         pip install cython
+        pip install python-for-android
 
-    - name: Build APK (allow long timeout)
-      timeout-minutes: 45
+    - name: Initialize Buildozer environment
       run: |
         source buildozer_venv/bin/activate
-        buildozer android clean
+        # Сначала запустим команду которая скачает p4a
+        buildozer android update || echo "Initial download started"
+        # Даем время на скачивание
+        sleep 30
+
+    - name: Build APK (allow long timeout)
+      timeout-minutes: 60
+      run: |
+        source buildozer_venv/bin/activate
         buildozer -v android debug
 
     - name: Upload APK
