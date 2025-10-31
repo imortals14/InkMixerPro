@@ -50,6 +50,13 @@ jobs:
         yes | sdkmanager --licenses
         sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.2"
 
+    - name: Install AIDL tool (if needed)
+      run: |
+        # Установка AIDL через build-tools (AIDL будет внутри этого пакета)
+        sdkmanager "build-tools;33.0.2"  # Убедись, что версия соответствует твоей
+        echo "Checking for AIDL"
+        aidl --version || echo "AIDL not found!"
+
     - name: Create virtual environment
       run: |
         python3 -m venv buildozer_venv
