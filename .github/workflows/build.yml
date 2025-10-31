@@ -12,41 +12,12 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Setup Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.9'
-
-    - name: Install system dependencies
+    - name: Build with Kivy Docker image
       run: |
-        sudo apt-get update
-        sudo apt-get install -y \
-          python3-venv \
-          python3-pip \
-          autoconf \
-          build-essential \
-          libssl-dev \
-          libffi-dev \
-          openjdk-11-jdk \
-          zip \
-          unzip \
-          git
-
-    - name: Create and activate virtual environment
-      run: |
-        python3 -m venv venv
-        source venv/bin/activate
-
-    - name: Install Buildozer and dependencies in virtual environment
-      run: |
-        source venv/bin/activate
-        pip install buildozer
-        pip install cython
-
-    - name: Build APK with Buildozer
-      run: |
-        source venv/bin/activate
-        buildozer -v android debug
+        docker run --rm \
+          --volume "$(pwd)":/home/user/hostcwd \
+          --volume buildozer_docker_cache:/home/user/.buildozer \
+          kivy/buildozer android debug
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
