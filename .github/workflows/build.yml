@@ -7,7 +7,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -17,57 +17,25 @@ jobs:
       with:
         python-version: '3.9'
 
-    - name: Install system dependencies
+    - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y \
-          python3-pip \
-          python3-venv \
-          autoconf \
-          build-essential \
-          libssl-dev \
-          libffi-dev \
-          openjdk-11-jdk \
-          zip \
-          unzip \
-          git \
-          cython3 \
-          wget
+        sudo apt-get install -y zip unzip openjdk-11-jdk python3-venv python3-pip git
 
-    - name: Install Android Command Line Tools
+    - name: Setup Buildozer
       run: |
-        wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
-        mkdir -p $HOME/android-sdk/cmdline-tools
-        unzip -q commandlinetools-linux-9477386_latest.zip -d $HOME/android-sdk/cmdline-tools
-        mv $HOME/android-sdk/cmdline-tools/cmdline-tools $HOME/android-sdk/cmdline-tools/latest
-        echo "ANDROID_SDK_ROOT=$HOME/android-sdk" >> $GITHUB_ENV
-        echo "PATH=$HOME/android-sdk/cmdline-tools/latest/bin:$HOME/android-sdk/platform-tools:$PATH" >> $GITHUB_ENV
-
-    - name: Accept Android licenses and install build-tools
-      run: |
-        yes | sdkmanager --licenses
-        sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.2"
-
-    - name: Check AIDL tool
-      run: |
-        which aidl || echo "AIDL not found"
-        aidl --version || echo "AIDL still not available"
-
-    - name: Create virtual environment
-      run: |
-        python3 -m venv buildozer_venv
-        source buildozer_venv/bin/activate
+        python3 -m venv venv
+        source venv/bin/activate
         pip install --upgrade pip
         pip install buildozer cython
 
-    - name: Build APK (allow long timeout)
+    - name: Build APK (auto-download SDK/NDK)
       timeout-minutes: 60
       run: |
-        source buildozer_venv/bin/activate
-        buildozer -v android debug
+        source venv/bin/activate
+        buildozer android debug
 
     - name: Upload APK
-      if: success()
       uses: actions/upload-artifact@v4
       with:
         name: InkMixerPro-APK
