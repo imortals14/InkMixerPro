@@ -27,20 +27,26 @@ jobs:
           libssl-dev \
           libffi-dev \
           openjdk-11-jdk \
-          zip
+          zip \
+          unzip
 
     - name: Install Buildozer
       run: pip install buildozer
+
+    - name: Initialize Buildozer and download Android SDK
+      run: |
+        buildozer init
+        # Запускаем первую сборку чтобы скачался Android SDK
+        buildozer android clean || true
 
     - name: Accept Android licenses
       run: |
         mkdir -p ~/.android
         touch ~/.android/repositories.cfg
-        yes | /home/runner/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager --licenses
+        yes | /home/runner/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses
 
     - name: Build APK
       run: |
-        buildozer init
         buildozer -v android debug
 
     - name: Upload APK
