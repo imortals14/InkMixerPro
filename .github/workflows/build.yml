@@ -29,17 +29,19 @@ jobs:
           libffi-dev \
           openjdk-11-jdk \
           zip \
-          unzip
+          unzip \
+          git
 
     - name: Create and activate virtual environment
       run: |
         python3 -m venv venv
         source venv/bin/activate
 
-    - name: Install Buildozer in virtual environment
+    - name: Install Buildozer and dependencies in virtual environment
       run: |
         source venv/bin/activate
         pip install buildozer
+        pip install cython
 
     - name: Build APK with Buildozer
       run: |
