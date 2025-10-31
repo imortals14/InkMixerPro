@@ -29,7 +29,7 @@ jobs:
         pip install --upgrade pip
         pip install buildozer cython
 
-    - name: Build APK (auto-download SDK/NDK)
+    - name: Build APK
       timeout-minutes: 60
       run: |
         source venv/bin/activate
