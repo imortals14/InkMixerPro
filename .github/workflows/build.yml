@@ -12,14 +12,48 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Build with Kivy Docker image
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+
+    - name: Install system dependencies
       run: |
-        docker run --rm \
-          --volume "$(pwd)":/home/user/hostcwd \
-          --volume buildozer_docker_cache:/home/user/.buildozer \
-          kivy/buildozer android debug
+        sudo apt-get update
+        sudo apt-get install -y \
+          python3-pip \
+          python3-venv \
+          autoconf \
+          build-essential \
+          libssl-dev \
+          libffi-dev \
+          openjdk-11-jdk \
+          zip \
+          unzip \
+          git \
+          cython3
+
+    - name: Create virtual environment
+      run: |
+        python3 -m venv buildozer_venv
+        source buildozer_venv/bin/activate
+
+    - name: Install Buildozer and requirements
+      run: |
+        source buildozer_venv/bin/activate
+        pip install --upgrade pip
+        pip install buildozer
+        pip install cython
+
+    - name: Build APK (allow long timeout)
+      timeout-minutes: 45
+      run: |
+        source buildozer_venv/bin/activate
+        buildozer android clean
+        buildozer -v android debug
 
     - name: Upload APK
+      if: success()
       uses: actions/upload-artifact@v4
       with:
         name: InkMixerPro-APK
