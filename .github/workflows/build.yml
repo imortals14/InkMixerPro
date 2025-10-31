@@ -7,7 +7,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
+    
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -20,20 +20,62 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y zip unzip openjdk-11-jdk python3-venv python3-pip git
+        sudo apt-get install -y \
+          python3-pip \
+          python3-venv \
+          openjdk-11-jdk \
+          zip \
+          unzip \
+          git \
+          wget \
+          curl
 
     - name: Setup Buildozer
       run: |
         python3 -m venv venv
         source venv/bin/activate
         pip install --upgrade pip
-        pip install buildozer cython
+        pip install buildozer
+
+    - name: Pre-download Android SDK for Buildozer
+      run: |
+        source venv/bin/activate
+        
+        # Создаем структуру папок Buildozer
+        mkdir -p ~/.buildozer/android/platform/android-sdk
+        
+        # Скачиваем Android SDK напрямую
+        wget -q --show-progress --progress=bar:force https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O /tmp/android-sdk.zip
+        
+        # Распаковываем в папку Buildozer
+        unzip -q /tmp/android-sdk.zip -d ~/.buildozer/android/platform/android-sdk/
+        
+        # Правильно организуем папки
+        mv ~/.buildozer/android/platform/android-sdk/cmdline-tools ~/.buildozer/android/platform/android-sdk/cmdline-tools-tmp
+        mkdir -p ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest
+        mv ~/.buildozer/android/platform/android-sdk/cmdline-tools-tmp/* ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest/
+        rm -rf ~/.buildozer/android/platform/android-sdk/cmdline-tools-tmp
+        
+        echo "Android SDK pre-downloaded successfully"
+
+    - name: Install Android components
+      run: |
+        source venv/bin/activate
+        
+        export ANDROID_SDK_ROOT=~/.buildozer/android/platform/android-sdk
+        export PATH=~/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin:$PATH
+        
+        # Принимаем лицензии
+        yes | sdkmanager --licenses || true
+        
+        # Устанавливаем компоненты
+        sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.2" "emulator"
 
     - name: Build APK
       timeout-minutes: 60
       run: |
         source venv/bin/activate
-        buildozer android debug
+        buildozer -v android debug
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
