@@ -12,18 +12,39 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Build with Docker
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+
+    - name: Install system dependencies
       run: |
-        docker run --rm \
-          -v $(pwd):/src \
-          -v buildozer_docker_cache:/home/user/.buildozer \
-          beevelop/cordova bash -c "
-          cd /src &&
-          apt-get update &&
-          apt-get install -y python3-pip &&
-          pip install buildozer &&
-          buildozer -v android debug
-          "
+        sudo apt-get update
+        sudo apt-get install -y \
+          python3-venv \
+          python3-pip \
+          autoconf \
+          build-essential \
+          libssl-dev \
+          libffi-dev \
+          openjdk-11-jdk \
+          zip \
+          unzip
+
+    - name: Create and activate virtual environment
+      run: |
+        python3 -m venv venv
+        source venv/bin/activate
+
+    - name: Install Buildozer in virtual environment
+      run: |
+        source venv/bin/activate
+        pip install buildozer
+
+    - name: Build APK with Buildozer
+      run: |
+        source venv/bin/activate
+        buildozer -v android debug
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
