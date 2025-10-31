@@ -12,39 +12,18 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Setup Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.9'
-
-    - name: Install system dependencies
+    - name: Build with Docker
       run: |
-        sudo apt-get update
-        sudo apt-get install -y \
-          python3-pip \
-          autoconf \
-          build-essential \
-          libssl-dev \
-          libffi-dev \
-          openjdk-11-jdk \
-          zip \
-          unzip
-
-    - name: Install Buildozer
-      run: pip install buildozer
-
-    - name: Download Android SDK and accept licenses
-      run: |
-        mkdir -p ~/.android
-        touch ~/.android/repositories.cfg
-        # Запускаем сборку чтобы скачать Android SDK
-        buildozer android clean || true
-        # Принимаем лицензии
-        yes | /home/runner/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses
-
-    - name: Build APK
-      run: |
-        buildozer -v android debug
+        docker run --rm \
+          -v $(pwd):/src \
+          -v buildozer_docker_cache:/home/user/.buildozer \
+          beevelop/cordova bash -c "
+          cd /src &&
+          apt-get update &&
+          apt-get install -y python3-pip &&
+          pip install buildozer &&
+          buildozer -v android debug
+          "
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
