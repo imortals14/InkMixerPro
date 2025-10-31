@@ -37,44 +37,33 @@ jobs:
     - name: Install Android Command Line Tools
       run: |
         wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
-        mkdir -p ~/android-sdk/cmdline-tools
-        unzip -q commandlinetools-linux-9477386_latest.zip -d ~/android-sdk/cmdline-tools
-        mv ~/android-sdk/cmdline-tools/cmdline-tools ~/android-sdk/cmdline-tools/latest
-        export ANDROID_SDK_ROOT=~/android-sdk
-        echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
+        mkdir -p $HOME/android-sdk/cmdline-tools
+        unzip -q commandlinetools-linux-9477386_latest.zip -d $HOME/android-sdk/cmdline-tools
+        mv $HOME/android-sdk/cmdline-tools/cmdline-tools $HOME/android-sdk/cmdline-tools/latest
+        echo "ANDROID_SDK_ROOT=$HOME/android-sdk" >> $GITHUB_ENV
+        echo "PATH=$HOME/android-sdk/cmdline-tools/latest/bin:$HOME/android-sdk/platform-tools:$PATH" >> $GITHUB_ENV
 
     - name: Accept Android licenses and install build-tools
       run: |
-        export ANDROID_SDK_ROOT=~/android-sdk
-        export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$PATH
         yes | sdkmanager --licenses
         sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.2"
 
-    - name: Install AIDL tool (if needed)
+    - name: Check AIDL tool
       run: |
-        # Установка AIDL через build-tools (AIDL будет внутри этого пакета)
-        sdkmanager "build-tools;33.0.2"  # Убедись, что версия соответствует твоей
-        echo "Checking for AIDL"
-        aidl --version || echo "AIDL not found!"
+        which aidl || echo "AIDL not found"
+        aidl --version || echo "AIDL still not available"
 
     - name: Create virtual environment
       run: |
         python3 -m venv buildozer_venv
         source buildozer_venv/bin/activate
-
-    - name: Install Buildozer and requirements
-      run: |
-        source buildozer_venv/bin/activate
         pip install --upgrade pip
-        pip install buildozer
-        pip install cython
+        pip install buildozer cython
 
     - name: Build APK (allow long timeout)
       timeout-minutes: 60
       run: |
         source buildozer_venv/bin/activate
-        export ANDROID_SDK_ROOT=~/android-sdk
-        export PATH=~/android-sdk/cmdline-tools/latest/bin:~/android-sdk/platform-tools:$PATH
         buildozer -v android debug
 
     - name: Upload APK
