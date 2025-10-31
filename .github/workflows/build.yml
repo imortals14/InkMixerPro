@@ -3,8 +3,6 @@ name: Build Android APK
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
 
 jobs:
   build:
@@ -14,29 +12,40 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Set up Python
+    - name: Setup Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.9'
 
-    - name: Install Buildozer dependencies
+    - name: Install system dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y git autoconf build-essential libssl-dev libffi-dev python3-pip python3-venv
+        sudo apt-get install -y \
+          python3-pip \
+          autoconf \
+          build-essential \
+          libssl-dev \
+          libffi-dev \
+          openjdk-11-jdk \
+          zip
 
     - name: Install Buildozer
-      run: |
-        pip install buildozer
-        pip install cython
+      run: pip install buildozer
 
-    - name: Build APK with Buildozer
+    - name: Accept Android licenses
       run: |
-        buildozer android debug
-        ls -la bin/
+        mkdir -p ~/.android
+        touch ~/.android/repositories.cfg
+        yes | /home/runner/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager --licenses
+
+    - name: Build APK
+      run: |
+        buildozer init
+        buildozer -v android debug
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
         name: InkMixerPro-APK
         path: bin/*.apk
-        retention-days: 30
+        retention-days: 5
