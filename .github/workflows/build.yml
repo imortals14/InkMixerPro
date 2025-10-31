@@ -33,16 +33,13 @@ jobs:
     - name: Install Buildozer
       run: pip install buildozer
 
-    - name: Initialize Buildozer and download Android SDK
-      run: |
-        buildozer init
-        # Запускаем первую сборку чтобы скачался Android SDK
-        buildozer android clean || true
-
-    - name: Accept Android licenses
+    - name: Download Android SDK and accept licenses
       run: |
         mkdir -p ~/.android
         touch ~/.android/repositories.cfg
+        # Запускаем сборку чтобы скачать Android SDK
+        buildozer android clean || true
+        # Принимаем лицензии
         yes | /home/runner/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses
 
     - name: Build APK
